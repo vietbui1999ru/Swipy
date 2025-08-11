@@ -78,14 +78,14 @@ interface SpotifyError {
 }
 
 //Environment Variables. Stored locally for security.
-const CLIENT_ID: string = process.env.SPOTIFY_CLIENT_ID;
+const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 
 /**
  * Function to get access Token for future Web API Calls.
  * Handles unexpected errors.
 	*/
-async function getSpotifyToken(): Promise<string> {
+export async function getSpotifyToken(): Promise<string> {
 	try {
 		// fetch response
 		const response = await fetch('https://accounts.spotify.com/api/token', {

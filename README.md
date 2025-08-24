@@ -8,8 +8,9 @@ A full-stack music discovery application that implements a Tinder-like swiping i
 - ✅ Spotify token access implementation
 - 🔄 Initial project structure setup
 - ❌ Frontend React app (not yet created)
-- ❌ Database schema and ORM setup
-- ❌ GraphQL API implementation
+- ❌ Django backend setup
+- ❌ Database schema and Django models
+- ❌ REST API implementation
 - ❌ AWS integration for user accounts
 
 ## Technology Stack
@@ -22,18 +23,16 @@ A full-stack music discovery application that implements a Tinder-like swiping i
 - **Build Tool**: Vite (recommended)
 
 ### Backend
-- **Runtime**: Node.js with TypeScript
-- **Framework**: Express.js or Fastify
-- **GraphQL**: Apollo Server or Pothos GraphQL
+- **Framework**: Django with Python
+- **API**: Django REST Framework
 - **Authentication**: JWT + Spotify OAuth2.0
-- **File Upload**: Multer (for profile images)
+- **File Upload**: Django's built-in file handling
+- **Admin Interface**: Django Admin
 
 ### Database & ORM
-- **Database**: PostgreSQL (recommended) or MongoDB
-- **ORM Options**:
-  - **Prisma** (recommended - excellent TypeScript support, migrations)
-  - **TypeORM** (alternative - decorator-based)
-  - **Drizzle** (lightweight, SQL-like)
+- **Database**: PostgreSQL (recommended) or SQLite for development
+- **ORM**: Django ORM (built-in)
+- **Migrations**: Django's migration system
 
 ### Cloud & Infrastructure
 - **Cloud Provider**: AWS
@@ -95,39 +94,37 @@ swipy/
 ├── README.md
 ├── docker-compose.yml             # Local development setup
 │
-├── packages/                      # Monorepo structure (optional)
-│   ├── shared/                    # Shared types and utilities
-│   │   ├── types/                 # TypeScript interfaces
-│   │   ├── utils/                 # Common utilities
-│   │   └── constants/             # Shared constants
-│   │
-│   ├── frontend/                  # React frontend application
-│   │   ├── public/
-│   │   ├── src/
-│   │   │   ├── components/        # Reusable UI components
-│   │   │   ├── pages/             # Page components
-│   │   │   ├── hooks/             # Custom React hooks
-│   │   │   ├── services/          # API calls and external services
-│   │   │   ├── context/           # React context providers
-│   │   │   ├── utils/             # Frontend utilities
-│   │   │   ├── types/             # TypeScript types
-│   │   │   └── assets/            # Static assets
-│   │   ├── package.json
-│   │   └── vite.config.ts
-│   │
-│   └── backend/                   # Node.js backend API
-│       ├── src/
-│       │   ├── resolvers/         # GraphQL resolvers
-│       │   ├── schema/            # GraphQL schema definitions
-│       │   ├── models/            # Database models
-│       │   ├── services/          # Business logic services
-│       │   ├── middleware/        # Express middleware
-│       │   ├── utils/             # Backend utilities
-│       │   ├── config/            # Configuration files
-│       │   └── types/             # TypeScript types
-│       ├── prisma/                # Database schema and migrations
-│       ├── package.json
-│       └── tsconfig.json
+├── frontend/                      # React frontend application
+│   ├── public/
+│   ├── src/
+│   │   ├── components/            # Reusable UI components
+│   │   ├── pages/                 # Page components
+│   │   ├── hooks/                 # Custom React hooks
+│   │   ├── services/              # API calls and external services
+│   │   ├── context/               # React context providers
+│   │   ├── utils/                 # Frontend utilities
+│   │   ├── types/                 # TypeScript types
+│   │   └── assets/                # Static assets
+│   ├── package.json
+│   └── vite.config.ts
+│
+└── backend/                       # Django backend API
+    ├── swipy/                     # Django project directory
+    │   ├── __init__.py
+    │   ├── settings.py            # Django settings
+    │   ├── urls.py                # URL routing
+    │   └── wsgi.py
+    ├── apps/                      # Django applications
+    │   ├── users/                 # User management app
+    │   │   ├── models.py
+    │   │   ├── views.py
+    │   │   ├── serializers.py
+    │   │   └── urls.py
+    │   ├── playlists/             # Playlist management app
+    │   ├── songs/                 # Song data app
+    │   └── social/                # Social features app
+    ├── requirements.txt           # Python dependencies
+    └── manage.py                  # Django management script
 │
 ├── infrastructure/                # AWS/deployment configurations
 │   ├── terraform/                 # Infrastructure as code
@@ -206,10 +203,10 @@ CREATE TABLE friendships (
 ## Implementation Roadmap
 
 ### Phase 1: Foundation Setup (Weeks 1-2)
-- [ ] Set up monorepo structure with proper tooling
-- [ ] Configure TypeScript, ESLint, Prettier across packages
-- [ ] Set up database with chosen ORM (Prisma recommended)
-- [ ] Implement basic GraphQL schema and resolvers
+- [ ] Set up Django project structure
+- [ ] Configure Django settings and environment
+- [ ] Set up database with Django ORM
+- [ ] Implement Django REST API endpoints
 - [ ] Create React app with routing and basic UI components
 - [ ] Set up Spotify OAuth2.0 PKCE flow (enhance existing implementation)
 
@@ -246,22 +243,36 @@ CREATE TABLE friendships (
    # Clone and setup
    git clone <repo-url>
    cd swipy
-   npm install
+   
+   # Backend setup
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
    
    # Setup environment variables
    cp .env.example .env
    # Fill in Spotify Client ID, Client Secret, etc.
    
    # Database setup
-   npm run db:setup
-   npm run db:migrate
+   python manage.py migrate
+   python manage.py createsuperuser
+   
+   # Frontend setup
+   cd ../frontend
+   npm install
    
    # Start development servers
-   npm run dev # Runs both frontend and backend
+   # Backend: python manage.py runserver
+   # Frontend: npm run dev
    ```
 
 2. **Environment Variables Required**:
    ```env
+   # Django
+   DEBUG=True
+   SECRET_KEY=your_django_secret_key
+   
    # Spotify API
    SPOTIFY_CLIENT_ID=your_client_id
    SPOTIFY_CLIENT_SECRET=your_client_secret
@@ -282,68 +293,51 @@ CREATE TABLE friendships (
 ### API Endpoints Design
 
 #### Authentication Endpoints
-```typescript
-// REST endpoints for OAuth flow
-POST /auth/spotify/authorize     // Initiate Spotify OAuth
-POST /auth/spotify/callback      // Handle OAuth callback
-POST /auth/refresh               // Refresh JWT token
-POST /auth/logout                // Logout user
+```python
+# Django REST API endpoints
+POST /api/auth/spotify/authorize/     # Initiate Spotify OAuth
+POST /api/auth/spotify/callback/      # Handle OAuth callback
+POST /api/auth/refresh/               # Refresh JWT token
+POST /api/auth/logout/                # Logout user
 ```
 
-#### GraphQL Schema (Core Types)
-```graphql
-type User {
-  id: ID!
-  spotifyId: String!
-  username: String!
-  displayName: String
-  email: String!
-  avatarUrl: String
-  playlists: [Playlist!]!
-  friends: [User!]!
-  preferences: UserPreferences
-}
+#### Django Models (Core Types)
+```python
+from django.db import models
+from django.contrib.auth.models import AbstractUser
 
-type Song {
-  id: ID!
-  spotifyId: String!
-  title: String!
-  artist: String!
-  album: String
-  durationMs: Int!
-  audioFeatures: AudioFeatures
-}
-
-type Playlist {
-  id: ID!
-  name: String!
-  description: String
-  isPublic: Boolean!
-  isCollaborative: Boolean!
-  songs: [Song!]!
-  owner: User!
-}
-
-type AudioFeatures {
-  danceability: Float!
-  energy: Float!
-  valence: Float!
-  tempo: Float!
-  acousticness: Float!
-  instrumentalness: Float!
-  speechiness: Float!
-}
+class User(AbstractUser):
+    spotify_id = models.CharField(max_length=100, unique=True)
+    display_name = models.CharField(max_length=100, blank=True)
+    avatar_url = models.URLField(blank=True)
+    preferences = models.JSONField(default=dict)
+    
+class Song(models.Model):
+    spotify_id = models.CharField(max_length=100, unique=True)
+    title = models.CharField(max_length=200)
+    artist = models.CharField(max_length=200)
+    album = models.CharField(max_length=200, blank=True)
+    duration_ms = models.IntegerField()
+    audio_features = models.JSONField(default=dict)
+    
+class Playlist(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_public = models.BooleanField(default=False)
+    is_collaborative = models.BooleanField(default=False)
+    songs = models.ManyToManyField(Song, through='PlaylistSong')
 ```
 
 ## Testing Strategy
 
 ### Unit Testing
 - **Frontend**: Jest + React Testing Library
-- **Backend**: Jest + Supertest for API testing
-- **Database**: Test database with seed data
+- **Backend**: Django's built-in testing framework + pytest
+- **Database**: Django test database with fixtures
 
 ### Integration Testing
-- **API Testing**: Test GraphQL resolvers with real database
+- **API Testing**: Test Django REST API endpoints with test database
 - **Authentication Flow**: Test complete OAuth2.0 flow
 - **Spotify Integration**: Mock Spotify API responses
 
@@ -429,10 +423,12 @@ type AudioFeatures {
 ## Contributing Guidelines
 
 ### Code Standards
-- TypeScript for all new code
-- ESLint + Prettier configuration
+- Python PEP 8 for backend code
+- TypeScript for frontend code
+- ESLint + Prettier configuration for frontend
+- Black code formatter for Python
 - Conventional commits for git messages
-- Comprehensive JSDoc comments
+- Comprehensive docstrings for Python functions
 
 ### Pull Request Process
 1. Feature branch from main
@@ -451,8 +447,8 @@ type AudioFeatures {
 
 ### Technology Documentation
 - [React Documentation](https://react.dev)
-- [GraphQL Documentation](https://graphql.org/learn)
-- [Prisma Documentation](https://www.prisma.io/docs)
+- [Django Documentation](https://docs.djangoproject.com)
+- [Django REST Framework](https://www.django-rest-framework.org)
 - [AWS Documentation](https://docs.aws.amazon.com)
 
 ---
